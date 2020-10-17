@@ -1,5 +1,5 @@
 """
-Quick Wrapper around the DFP API to allow for pulling reports by either ID
+Quick Wrapper around the GAM API to allow for pulling reports by either ID
     or by manual setup. Results can be returned as temporary files, or as
     pandas dataframes.
 
@@ -23,26 +23,28 @@ import pandas as pd
 import numpy as np
 from tqdm import tnrange, tqdm, tqdm_notebook
 from IPython.display import display, clear_output
-from .settings import settings
+
+default_api_version = "v202008"
 
 
-class DFPConnection():
-    """Base Connection class for the DFP API Wrapper. Not super useful on its
+class GAMConnection():
+    """Base Connection class for the GAM API Wrapper. Not super useful on its
     own.
 
     Raises:
-        Exception: Login error- Incorrect login details, or DFP could not be
+        Exception: Login error- Incorrect login details, or GAM could not be
         reached
 
     Returns:
-        DFPConnection -- Class to help interface with DFP
+        GAMConnection -- Class to help interface with GAM
     """
-    name = settings.get('bot_name')
-    api_version = settings.get('api_version')
 
-    def __init__(self, login_dict, dfp_account_num):
+    def __init__(self, login_dict, gam_account_num,
+                 bot_name='GAM Bot', api_version=default_api_version):
+        self.name = bot_name
+        self.api_version = api_version
         self.login = login_dict
-        self.network = dfp_account_num
+        self.network = gam_account_num
         self.connection = self.connect(self.login, self.network)
         if not self.connection:
             raise Exception("Invalid Login")
@@ -65,18 +67,18 @@ class DFPConnection():
         return content_file.name if return_path else content_file
 
     def connect(self, key_dict, network_code):
-        """Takes a dictionary containing DFP login information,
-            along with a Network code and returns a dfp connection object
+        """Takes a dictionary containing GAM login information,
+            along with a Network code and returns a GAM connection object
 
         Arguments:
             key_dict {dict} -- Login dict.
                             private_key,
                             client_email,
                             and token_uri are required
-            network_code {str} -- DFP network to connect to
+            network_code {str} -- GAM network to connect to
 
         Returns:
-            AdmanagerClient -- DFP connection client
+            AdmanagerClient -- GAM connection client
         """
 
         key_file = self._create_tmp_file(
@@ -93,13 +95,15 @@ class DFPConnection():
             return False
 
 
-class DFPSystem(DFPConnection):
-    """Class used to interface with generic System items within DFP. Currently
+class GAMSystem(GAMConnection):
+    """Class used to interface with generic System items within GAM. Currently
     only suppports interacting with Key Values
     """
 
-    def __init__(self, login_dict, dfp_account_num):
-        super().__init__(login_dict, dfp_account_num)
+    def __init__(self, login_dict, gam_account_num,
+                 bot_name='GAM Bot', api_version=default_api_version):
+        super().__init__(login_dict, gam_account_num,
+                         bot_name=bot_name, api_version=api_version)
         self.custom_targeting_service = self.connection.GetService(
             "CustomTargetingService", version=self.api_version)
 
@@ -109,10 +113,10 @@ class DFPSystem(DFPConnection):
         )
 
     def _get_key_by_name(self, key_name):
-        """Retrieves key details from DFP based on the name of the key
+        """Retrieves key details from GAM based on the name of the key
 
         Arguments:
-            key_name {str} -- Name of the key as it appears in DFP
+            key_name {str} -- Name of the key as it appears in GAM
 
         Returns:
             CustomTargetingKey -- Dict like object that contains key details
@@ -125,12 +129,13 @@ class DFPSystem(DFPConnection):
 
         return next(iter(resp['results'] or []), None)
 
-    def get_current_values(self, key_id, return_column = 'name', print_status_bar=False):
-        """Returns a list of values currently in DFP for given key ID.
+    def get_current_values(self, key_id, return_column='name',
+                           print_status_bar=False):
+        """Returns a list of values currently in GAM for given key ID.
         ID can be retrieved using _get_key_by_name
 
         Arguments:
-            key_id {int} -- DFP key ID
+            key_id {int} -- GAM key ID
 
         Returns:
             [list] -- values assigned to key
@@ -151,10 +156,12 @@ class DFPSystem(DFPConnection):
         while received < total:
             statement = (
                 ad_manager.StatementBuilder(
-                    version=self.api_version).Where(f"customTargetingKeyId = '{key_id}'"))
+                    version=self.api_version).Where(
+                        f"customTargetingKeyId = '{key_id}'"))
             statement.offset = offset
             resp = \
-                self.custom_targeting_service.getCustomTargetingValuesByStatement(
+                self.custom_targeting_service \
+                .getCustomTargetingValuesByStatement(
                     statement.ToStatement())
             total = resp["totalResultSetSize"]
             results.extend([value[return_column] for value in resp['results']])
@@ -202,10 +209,10 @@ class DFPSystem(DFPConnection):
             create_key=False,
             print_status_bar=False,
             chunk_upload_size=200):
-        """Uploads a list of values to the specified key in DFP.
+        """Uploads a list of values to the specified key in GAM.
 
         Arguments:
-            key {str} -- Key name in DFP
+            key {str} -- Key name in GAM
             values {list or dataframe or dataframe series} -- values to be
             assigned to the specified key
 
@@ -243,12 +250,12 @@ class DFPSystem(DFPConnection):
                 enumerate(new_values_chunked), desc='upload'):
             try:
                 tqdm.write(f"now uploading {value_chunk}")
-                upload = self.custom_targeting_service.createCustomTargetingValues(
-                    value_chunk)
+                upload = self.custom_targeting_service \
+                    .createCustomTargetingValues(value_chunk)
             except Exception as e:
                 if chunk_upload_size == 1:
                     tqdm.write(
-                        f"Skipping {value_chunk} as it is already in DFP")
+                        f"Skipping {value_chunk} as it is already in GAM")
                     continue
                 raise e
             if print_status_bar:
@@ -264,10 +271,10 @@ class DFPSystem(DFPConnection):
             key,
             values,
             print_status_bar=False):
-        """Uploads a list of values to the specified key in DFP.
+        """Uploads a list of values to the specified key in GAM.
 
         Arguments:
-            key {str} -- Key name in DFP
+            key {str} -- Key name in GAM
             values {list or dataframe or dataframe series} -- values to be
             assigned to the specified key
 
@@ -294,24 +301,28 @@ class DFPSystem(DFPConnection):
         total = 1
         results = []
         while received < total:
-            statement = (ad_manager.StatementBuilder(version=self.api_version).Where(
-                f"name IN {tuple(values)} AND customTargetingKeyId = '{key_id}'"))
+            statement = (ad_manager.StatementBuilder(version=self.api_version)
+                         .Where(
+                f"name IN {tuple(values)} AND "
+                f"customTargetingKeyId = '{key_id}'"))
             statement.offset = offset
-            resp = self.custom_targeting_service.getCustomTargetingValuesByStatement(
-                statement.ToStatement())
+            resp = self.custom_targeting_service \
+                .getCustomTargetingValuesByStatement(statement.ToStatement())
             total = resp["totalResultSetSize"]
             results.extend([value['name'] for value in resp['results']])
             received = len(results)
 
             value_ids = [value['id'] for value in resp['results']]
             action = {'xsi_type': 'DeleteCustomTargetingValues'}
-            value_statement = (ad_manager.StatementBuilder(version=self.api_version)
+            value_statement = (ad_manager.StatementBuilder(
+                                version=self.api_version)
                                .Where('customTargetingKeyId = :keyId '
                                       f'AND id IN {tuple(value_ids)}')
                                .WithBindVariable('keyId', key_id))
 
-            result = self.custom_targeting_service.performCustomTargetingValueAction(
-                action, value_statement.ToStatement())
+            result = self.custom_targeting_service \
+                .performCustomTargetingValueAction(
+                    action, value_statement.ToStatement())
 
         return True
 
@@ -352,8 +363,10 @@ class DFPSystem(DFPConnection):
         Arguments:
             df {DataFrame} -- DF containing data.
         Keyword Arguments:
-            column_name {str} -- Name of column to pull. First column is defaulted if None (default: {None})
-            only_uniques {bool} -- Pulls only uniques if True. (default: {True})
+            column_name {str} -- Name of column to pull. First column is
+                                    defaulted if None (default: {None})
+            only_uniques {bool} -- Pulls only uniques if True.
+                                    (default: {True})
 
         Returns:
             list -- List of values
@@ -366,7 +379,7 @@ class DFPSystem(DFPConnection):
         return values
 
 
-class DFPReports(DFPConnection):
+class GAMReports(GAMConnection):
     name = 'monu-reports-scraper'
 
     def _convert_tmp_report_to_df(self, report_file, remove_column_types=True):
@@ -400,7 +413,7 @@ class DFPReports(DFPConnection):
         """Takes a connection, and query items and returns the resulting report
 
         Arguments:
-            connection {AdManagerClient} -- DFP connection client
+            connection {AdManagerClient} -- GAM connection client
             query_items {dict} -- Dict containing report data
 
         Keyword Arguments:
@@ -412,20 +425,20 @@ class DFPReports(DFPConnection):
             tuple -- report temp file, report id
         """
 
-        dfp_downloader = self.connection.GetDataDownloader(
+        gam_downloader = self.connection.GetDataDownloader(
             version=self.api_version)
         # queue report
-        dfp_query = query_items
+        gam_query = query_items
         if filter_pql:
-            dfp_query["statement"] = filter_pql
-        report_job = {'reportQuery': dfp_query}
+            gam_query["statement"] = filter_pql
+        report_job = {'reportQuery': gam_query}
         try:
-            report_job_id = dfp_downloader.WaitForReport(report_job)
+            report_job_id = gam_downloader.WaitForReport(report_job)
         except errors.AdManagerReportError as e:
             print(f'Failed to generate report. Error was: {e}')
             return False, 0
         report_file = tempfile.NamedTemporaryFile(suffix='.csv.gz',)
-        dfp_downloader.DownloadReportToFile(
+        gam_downloader.DownloadReportToFile(
             report_job_id, 'CSV_DUMP', report_file)
         report_file.flush()
         response_content = bytes(
@@ -439,7 +452,7 @@ class DFPReports(DFPConnection):
         return report, report_job_id
 
     def get_saved_report_params(self, report_id):
-        """Takes a dfp connection and report id and returns the query params
+        """Takes a GAM connection and report id and returns the query params
 
         Arguments:
             connection {AdManagerClient} -- Ad Manager connection
@@ -449,13 +462,13 @@ class DFPReports(DFPConnection):
             ReportQuery -- params of the report
         """
 
-        dfp_reports = self.connection.GetService(
+        gam_reports = self.connection.GetService(
             'ReportService', version=self.api_version)
         statement = (ad_manager.StatementBuilder(version=self.api_version)
                      .Where('id = :id')
                      .WithBindVariable('id', int(report_id))
                      .Limit(1))
-        response = dfp_reports.getSavedQueriesByStatement(
+        response = gam_reports.getSavedQueriesByStatement(
             statement.ToStatement())
         if 'results' in response and len(response['results']):
             saved_query = response['results'][0]
@@ -472,8 +485,8 @@ class DFPReports(DFPConnection):
         """Takes a connection and query id and returns the resulting report
 
         Arguments:
-            connection {AdManagerClient} -- DFP connection client
-            report_id {int} -- query id of query created in DFP
+            connection {AdManagerClient} -- GAM connection client
+            report_id {int} -- query id of query created in GAM
 
         Keyword Arguments:
             updated_params {dict} --dict of params to change, with their values
@@ -486,7 +499,7 @@ class DFPReports(DFPConnection):
             tuple -- report temp file, report id
         """
 
-        dfp_reports = self.connection.GetService(
+        gam_reports = self.connection.GetService(
             'ReportService', version=self.api_version)
         # Create statement object to filter for an order.
         statement = (ad_manager.StatementBuilder(version=self.api_version)
@@ -494,7 +507,7 @@ class DFPReports(DFPConnection):
                      .WithBindVariable('id', int(report_id))
                      .Limit(1))
 
-        response = dfp_reports.getSavedQueriesByStatement(
+        response = gam_reports.getSavedQueriesByStatement(
             statement.ToStatement())
 
         if 'results' in response and len(response['results']):
