@@ -24,7 +24,7 @@ import numpy as np
 from tqdm import tnrange, tqdm, tqdm_notebook
 from IPython.display import display, clear_output
 
-default_api_version = "v202008"
+default_api_version = "v202108"
 
 
 class GAMConnection():
