@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="gamclients",
-    version="0.0.1",
+    version="0.0.2",
     author="Monumetric",
     author_email="tech@monumetric.com",
     description="A small wrapper for the GAM python API to enable easier " +
@@ -20,4 +20,5 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     python_requires='>=3.6',
+    install_requires = ['tqdm', 'googleads', 'oauth2client', 'pandas', 'ipython'],
 )
