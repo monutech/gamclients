@@ -12,9 +12,7 @@ Raises:
 from googleads import ad_manager
 from googleads import oauth2
 from googleads import errors
-from datetime import datetime, timedelta
 import tempfile
-import base64
 import json
 from oauth2client.client import (AccessTokenRefreshError)
 import binascii
@@ -22,7 +20,6 @@ import gzip
 import pandas as pd
 import numpy as np
 from tqdm import tnrange, tqdm, tqdm_notebook
-from IPython.display import display, clear_output
 
 default_api_version = "v202108"
 
