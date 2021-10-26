@@ -2,6 +2,11 @@
 A simple wrapper for the GAM python API that allows for running reports quick and easy with very little knowledge of the GAM API required.
 All reports are returned as pandas dataframes.
 
+## Install ##
+
+Install this package using `pip install --index-url https://monupypi.herokuapp.com/simple/ gamclients`
+
+
 ## Usage ##
 You will need to set up a Service user on your GAM account and export the credentials.
 To generate the credentials for your service user, please refer to documentation here: https://developers.google.com/ad-manager/api/start
