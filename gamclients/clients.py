@@ -14,7 +14,7 @@ from googleads import oauth2
 from googleads import errors
 import tempfile
 import json
-from oauth2client.client import (AccessTokenRefreshError)
+from google.auth.exceptions import RefreshError
 import binascii
 import gzip
 import pandas as pd
@@ -97,7 +97,7 @@ class GAMConnection():
             return ad_manager.AdManagerClient(
                 oauth2_client,
                 self.name, network_code=network_code)
-        except (AccessTokenRefreshError, binascii.Error, ) as exc:
+        except (RefreshError, binascii.Error, ) as exc:
             print(f"Connection error, {exc}")
             return False
 
