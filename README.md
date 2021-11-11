@@ -66,3 +66,35 @@ report_df = gam.run_report(report_config)
 # Lastly, you can adjust any parameters using the same report json as above, and run that against a saved GAM query
 report_df = gam.run_report(REPORT_ID, updated_params=report_config)
 ```
+
+
+### Choosing Dataframe Library ###
+
+gamclients supports exporting query results as both a pandas or polars dataframe.
+
+You can specify which library you would like to use by passing an optional param, `dataframe_lib='polars'` to the GAMReports constructor.
+
+i.e.
+to use polars, run the following to initialize a GAMReports object
+```
+from gamclients.clients import GAMReports
+settings = {"private_key":"YOUR_PRIVATE_KEY",
+            "client_email":"YOUR_SERVICE_ACC_EMAIL",
+            "token_url":"https://accounts.google.com/o/oauth2/token"}
+bot_name = "GAM Reporting Bot"
+gam_acc_id = "YOUR_GAM_ID"
+gam = GAMReports(settings, gam_acc_id, dataframe_lib='polars')
+```
+
+Or the following to specify Pandas:
+```
+from gamclients.clients import GAMReports
+settings = {"private_key":"YOUR_PRIVATE_KEY",
+            "client_email":"YOUR_SERVICE_ACC_EMAIL",
+            "token_url":"https://accounts.google.com/o/oauth2/token"}
+bot_name = "GAM Reporting Bot"
+gam_acc_id = "YOUR_GAM_ID"
+gam = GAMReports(settings, gam_acc_id, dataframe_lib='pandas')
+```
+
+By defaul, gamclients uses pandas.
