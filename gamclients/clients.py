@@ -18,6 +18,7 @@ from oauth2client.client import (AccessTokenRefreshError)
 import binascii
 import gzip
 import pandas as pd
+import polars as pl
 import numpy as np
 from tqdm import tnrange, tqdm, tqdm_notebook
 
@@ -37,12 +38,21 @@ class GAMConnection():
     """
 
     def __init__(self, login_dict, gam_account_num,
-                 bot_name='GAM Bot', api_version=default_api_version):
+                 bot_name='GAM Bot', api_version=default_api_version,
+                 dataframe_lib='pandas'):
         self.name = bot_name
         self.api_version = api_version
         self.login = login_dict
         self.network = gam_account_num
         self.connection = self.connect(self.login, self.network)
+        if dataframe_lib == 'pandas':
+            self.df_lib = pd
+            self.df_core = pd.core
+        elif dataframe_lib == 'polars':
+            self.df_lib = pl
+            self.df_core = pl.eager
+        else:
+            raise ValueError(f"dataframe_lib must be one of 'pandas', 'polars'")
         if not self.connection:
             raise Exception("Invalid Login")
 
@@ -232,9 +242,9 @@ class GAMSystem(GAMConnection):
         current_values = self.get_current_values(
             key_details["id"], print_status_bar=print_status_bar)
 
-        if isinstance(values, pd.core.series.Series):
+        if isinstance(values, self.df_core.series.Series):
             values = values.values.tolist()
-        elif isinstance(values, pd.core.frame.DataFrame):
+        elif isinstance(values, self.df_core.frame.DataFrame):
             values = self.import_values_from_df(values)
         values = [str(i) for i in values]
         new_values_to_upload = self._get_new_values(values, current_values)
@@ -288,9 +298,9 @@ class GAMSystem(GAMConnection):
                 print("Key does not exist!")
             return None
 
-        if isinstance(values, pd.core.series.Series):
+        if isinstance(values, self.df_core.series.Series):
             values = values.values.tolist()
-        elif isinstance(values, pd.core.frame.DataFrame):
+        elif isinstance(values, self.df_core.frame.DataFrame):
             values = self.import_values_from_df(values)
         key_id = key_details['id']
         offset = 0
@@ -395,9 +405,11 @@ class GAMReports(GAMConnection):
             DataFrame -- Dataframe holding the contents of the file.
         """
         try:
-            df = pd.read_csv(report_file.name)
-        except pd.errors.EmptyDataError:
+            df = self.df_lib.read_csv(report_file.name)
+        except (pd.errors.EmptyDataError, RuntimeError) as e:
             print("Report is Empty!")
+            print(report_file.name)
+            print(e)
             return False
         if remove_column_types:
             df.columns = [col_name.split(".")[1] for col_name in df.columns]
