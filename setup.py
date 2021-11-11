@@ -20,5 +20,5 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     python_requires='>=3.6',
-    install_requires = ['tqdm', 'googleads', 'oauth2client', 'pandas', 'ipython'],
+    install_requires = ['tqdm', 'googleads', 'oauth2client', 'pandas', 'ipython', 'polars'],
 )
