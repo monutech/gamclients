@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="gamclients",
-    version="0.0.3",
+    version="0.0.4",
     author="Monumetric",
     author_email="tech@monumetric.com",
     description="A small wrapper for the GAM python API to enable easier " +
