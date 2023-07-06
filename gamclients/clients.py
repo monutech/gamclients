@@ -22,7 +22,7 @@ import polars as pl
 import numpy as np
 from tqdm import tnrange, tqdm, tqdm_notebook
 
-default_api_version = "v202205"
+default_api_version = "v202305"
 
 
 class GAMConnection():
