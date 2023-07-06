@@ -33,8 +33,10 @@ jobs:
     - name: Build package
       run: python -m build
     - name: Publish package
+      env:
+        BB_APP_PASS: ${{secrets.BB_APP_PASS}}
       run: | 
-        git clone https://${{ vars.BB_USER }}:${{ secrets.BB_APP_PASS }}@${{ vars.MONUPYPI_REPO_URI }}
+        git clone https://${{ vars.BB_USER }}:$BB_APP_PASS@${{ vars.MONUPYPI_REPO_URI }}
         cp -a dist/. ../monupypi/packages/gamclients
         cd ../monupypi
         git config user.email "pipelines@monumetric.com"
