@@ -34,7 +34,7 @@ jobs:
       run: python -m build
     - name: Publish package
       run: | 
-        git clone https://${{ vars.BB_USER }}:${{secrets.BB_APP_PASS}}@${{ vars.MONUPYPI_REPO_URI }}
+        git clone https://${{ vars.BB_USER }}:${{secrets.BB_APP_PASS}}@${{ vars.MONUPYPI_REPO_URI }} ../monupypi
         cp -a dist/. ../monupypi/packages/gamclients
         cd ../monupypi
         git config user.email "pipelines@monumetric.com"
