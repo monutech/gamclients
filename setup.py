@@ -4,8 +4,8 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="admanager-reports",
-    version="0.0.4.1",
+    name="gamclients",
+    version="0.0.4.2",
     author="Monumetric",
     author_email="tech@monumetric.com",
     description="A small wrapper for the GAM python API to enable easier " +
@@ -15,6 +15,7 @@ setuptools.setup(
     url="https://github.com/monutech/admanager-reports",
     packages=setuptools.find_packages(),
     classifiers=[
+        'Development Status :: 5 - Production/Stable',
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
